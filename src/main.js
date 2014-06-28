@@ -69,7 +69,7 @@ $(function() {
   function intensityToColor(intensity) {
     var scaledValue = Math.floor(intensity * 255);
 
-    // deepest areas are oceans.
+    // deepest areas are oceans, so calculate a water color via handwave.
     if (intensity < 0.3) {
       var blue = (intensity / 0.3) * 100 + 155;
       var green = (intensity / 0.3) * 80;
@@ -77,6 +77,30 @@ $(function() {
 
       return rgb(red, green, blue);
     }
+
+    // middle areas are land, so reapply handwave technique
+    if (intensity < 0.7) {
+      var normalizedIntensity = (intensity - 0.3) / 0.4;
+
+      var green = (1 - normalizedIntensity) * 100 + 100;
+      var red = 0;
+      var blue = 0;
+
+      return rgb(red, green, blue);
+    }
+
+    // mountains
+
+    if (intensity < 0.90) {
+      var normalizedIntensity = (intensity - 0.7) / 0.20;
+      var red = 100 - intensity * 60;
+      var blue = 0;
+      var green = 50;
+
+      return rgb(red, green, blue);
+    }
+
+    // snowpeaks!
 
     return "rgb(" + scaledValue + ", " + scaledValue + ", " + scaledValue + ")";
   }
