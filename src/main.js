@@ -1,5 +1,5 @@
 $(function() {
-  var TILESIZE = 10;
+  var TILESIZE = 20;
   var TILES = 50;
   var SMOOTHNESS = 10;
 
@@ -67,42 +67,41 @@ $(function() {
   }
 
   function intensityToColor(intensity) {
-    var scaledValue = Math.floor(intensity * 255);
+    var red, blue, green;
+    var normalizedIntensity;
 
-    // deepest areas are oceans, so calculate a water color via handwave.
     if (intensity < 0.3) {
-      var blue = (intensity / 0.3) * 100 + 155;
-      var green = (intensity / 0.3) * 80;
-      var red = 0;
+      // deepest areas are oceans, so calculate a water color via handwave.
 
-      return rgb(red, green, blue);
+      normalizedIntensity = intensity / 0.3;
+
+      blue = normalizedIntensity * 100 + 155;
+      green = normalizedIntensity * 80;
+      red = 0;
+    } else if (intensity < 0.7) {
+      // middle areas are land, so reapply handwave technique
+
+      normalizedIntensity = (intensity - 0.3) / 0.4;
+
+      green = (1 - normalizedIntensity) * 100 + 100;
+      red = 0;
+      blue = 0;
+
+    } else if (intensity < 0.90) {
+      // mountains
+
+      normalizedIntensity = (intensity - 0.7) / 0.20;
+
+      red = 100 - intensity * 60;
+      blue = 0;
+      green = 50;
+    } else {
+      // snowpeaks!
+
+      red = blue = green = Math.floor(intensity * 255);
     }
 
-    // middle areas are land, so reapply handwave technique
-    if (intensity < 0.7) {
-      var normalizedIntensity = (intensity - 0.3) / 0.4;
-
-      var green = (1 - normalizedIntensity) * 100 + 100;
-      var red = 0;
-      var blue = 0;
-
-      return rgb(red, green, blue);
-    }
-
-    // mountains
-
-    if (intensity < 0.90) {
-      var normalizedIntensity = (intensity - 0.7) / 0.20;
-      var red = 100 - intensity * 60;
-      var blue = 0;
-      var green = 50;
-
-      return rgb(red, green, blue);
-    }
-
-    // snowpeaks!
-
-    return "rgb(" + scaledValue + ", " + scaledValue + ", " + scaledValue + ")";
+    return rgb(red, green, blue);
   }
 
   function displaygrid(grid) {
