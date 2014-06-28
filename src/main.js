@@ -1,9 +1,10 @@
 $(function() {
-  var canvas = $("#canvas")[0];
-  var context = canvas.getContext('2d');
-
   var TILESIZE = 10;
   var TILES = 50;
+  var SMOOTHNESS = 10;
+
+  var canvas = $("#canvas")[0];
+  var context = canvas.getContext('2d');
 
   function makegrid(x, y) {
     var grid = [];
@@ -20,7 +21,9 @@ $(function() {
   }
 
   function terrainize(grid) {
-    for (var iterations = 0; iterations < 10; iterations++) {
+    // more iterations == more smoothness as we repeatedly make cells closer in value to their neighbors.
+
+    for (var iterations = 0; iterations < SMOOTHNESS; iterations++) {
       var deltas = [{x:0, y:1}, {x:0, y:-1}, {x:1, y:0}, {x:-1, y:0}];
 
       for (var i = 1; i < grid.length; i++) {
@@ -55,8 +58,25 @@ $(function() {
     });
   }
 
-  function intensityToGrayscale(intensity) {
+  function rgb(r, g, b) {
+    r = Math.floor(r);
+    g = Math.floor(g);
+    b = Math.floor(b);
+
+    return "rgb(" + r + ", " + g + ", " + b + ")";
+  }
+
+  function intensityToColor(intensity) {
     var scaledValue = Math.floor(intensity * 255);
+
+    // deepest areas are oceans.
+    if (intensity < 0.3) {
+      var blue = (intensity / 0.3) * 100 + 155;
+      var green = (intensity / 0.3) * 80;
+      var red = 0;
+
+      return rgb(red, green, blue);
+    }
 
     return "rgb(" + scaledValue + ", " + scaledValue + ", " + scaledValue + ")";
   }
@@ -64,7 +84,7 @@ $(function() {
   function displaygrid(grid) {
     _.each(grid, function(row, i) {
       _.each(row, function(cell, j) {
-        context.fillStyle = intensityToGrayscale(cell);
+        context.fillStyle = intensityToColor(cell);
         context.fillRect(i * TILESIZE, j * TILESIZE, TILESIZE, TILESIZE);
       });
     });
