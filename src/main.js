@@ -3,8 +3,8 @@ $(function() {
   var TILES = 50;
   var SMOOTHNESS = 10;
 
-  var canvas = $("#canvas")[0];
-  var context = canvas.getContext('2d');
+  var $canvas = $("#canvas");
+  var context = $canvas[0].getContext('2d');
 
   function makegrid(x, y) {
     var grid = [];
@@ -115,9 +115,43 @@ $(function() {
     return grid;
   }
 
+  var grid;
+  var mouseX = 0;
+  var mouseY = 0;
+
+  function snapToGrid(value) {
+    return Math.floor(value / TILESIZE) * TILESIZE;
+  }
+
+  function mousemove(e) {
+    mouseX = e.pageX - $canvas.offset().left;
+    mouseY = e.pageY - $canvas.offset().top;
+  }
+
+  function renderGrid(grid) {
+    displaygrid(normalize(grid));
+  }
+
+  function renderSelection() {
+    context.fillStyle = rgb(0, 0, 0);
+    context.strokeRect(snapToGrid(mouseX), snapToGrid(mouseY), TILESIZE, TILESIZE);
+  }
+
+  function render() {
+    renderGrid(grid);
+    renderSelection();
+
+    requestAnimationFrame(render);
+  }
+
   function main() {
     // It annoys me that these are in reverse order.
-    var grid = _.compose(displaygrid, normalize, terrainize, makegrid)(TILES, TILES);
+    grid = terrainize(makegrid(TILES, TILES));
+
+    renderGrid(grid);
+    $canvas.on("mousemove", mousemove);
+
+    requestAnimationFrame(render);
   }
 
   main();
