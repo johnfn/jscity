@@ -67,17 +67,37 @@ $(function() {
   }
 
   var upperRangeBoundaries = [
-    {water: 0.3},
-    {land: 0.7},
-    {mountain: 0.9},
-    {snow: 1.0}
+    { name: "water", value: 0.3 },
+    { name: "land", value: 0.7 },
+    { name: "mountain", value: 0.9 },
+    { name: "snow", value: 1.0 }
   ];
+
+  function getBoundary(name) {
+    for (var i = 0; i < upperRangeBoundaries.length; i++) {
+      if (upperRangeBoundaries[i].name == name) {
+        return upperRangeBoundaries[i].value;
+      }
+    }
+  }
+
+  function depthToLandType(depth) {
+    for (var i = 0; i < upperRangeBoundaries.length; i++) {
+      if (depth <= upperRangeBoundaries[i].value) return upperRangeBoundaries[i].name;
+    }
+
+    // should never be executed, but just in case.
+    // maybe they developed terraforming.
+    return upperRangeBoundaries[upperRangeBoundaries.length - 1].name;
+  }
 
   function intensityToColor(intensity) {
     var red, blue, green;
     var normalizedIntensity;
 
-    if (intensity < upperRangeBoundaries.water) {
+    // REFACTORING need to move the color calc functions into upperRangeBoundaries fn.
+
+    if (intensity < getBoundary("water")) {
       // deepest areas are oceans, so calculate a water color via handwave.
 
       normalizedIntensity = intensity / 0.3;
@@ -85,7 +105,7 @@ $(function() {
       blue = normalizedIntensity * 100 + 155;
       green = normalizedIntensity * 80;
       red = 0;
-    } else if (intensity < upperRangeBoundaries.land) {
+    } else if (intensity < getBoundary("land")) {
       // middle areas are land, so reapply handwave technique
 
       normalizedIntensity = (intensity - 0.3) / 0.4;
@@ -94,7 +114,7 @@ $(function() {
       red = 0;
       blue = 0;
 
-    } else if (intensity < upperRangeBoundaries.mountain) {
+    } else if (intensity < getBoundary("mountain")) {
       // mountains
 
       normalizedIntensity = (intensity - 0.7) / 0.20;
@@ -217,7 +237,7 @@ $(function() {
   function mousedown(e) {
     var gridvalue = grid[snapToIndex(mouseX)][snapToIndex(mouseY)];
 
-    console.log(gridvalue);
+    console.log(depthToLandType(gridvalue));
   }
 
   function renderGrid(grid) {
