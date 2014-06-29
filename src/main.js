@@ -108,30 +108,50 @@ $(function() {
 
   var infobar = {
     selectionName: "something",
-    stat: {
-      height: "10",
-      type: "land"
-    }
+    stat: [ { name: "type",   value: "land" } ,
+            { name: "height", value: "10" }
+          ]
   };
 
+  /*
+   * 20-line-long-better-than-backbone templating.
+   *
+   * An object is a template.
+   * A key is a value on that template. If it's an object, it's a subtemplate.
+   * An array is a list of templates.
+   *
+   */
   function $renderTemplate(template, data) {
     var thisLevelData = {};
     var $childTemplates = {};
+    var $childTemplateLists = {};
 
     for (var key in data) {
-      if (typeof data[key] === "object") {
+      if (_.isArray(data[key])) {
+        var templateList = [];
+
+        for (var i = 0; i < data[key].length; i++) {
+          templateList.push($renderTemplate(template + "-" + key, data[key][i]));
+        }
+
+        $childTemplateLists[key] = templateList;
+        // _.isObject([]) == "true" WUT WUT WUT
+      } else if (_.isObject(data[key])) {
         $childTemplates[key] = $renderTemplate(template + "-" + key, data[key]);
-
-        continue;
+      } else {
+        thisLevelData[key] = data[key];
       }
-
-      thisLevelData[key] = data[key];
     }
 
     var $el = $templ(template + "-template", thisLevelData);
+    var classname;
 
-    for (var classname in $childTemplates) {
+    for (classname in $childTemplates) {
       $el.find("." + classname).append($childTemplates[classname]);
+    }
+
+    for (classname in $childTemplateLists) {
+      $el.find("." + classname).append($childTemplateLists[classname]);
     }
 
     return $el;
