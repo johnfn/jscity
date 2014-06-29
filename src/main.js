@@ -104,6 +104,50 @@ $(function() {
     return rgb(red, green, blue);
   }
 
+  // INFOBAR
+
+  var infobar = {
+    selectionName: "something",
+    information: {
+      height: "10",
+      type: "land"
+    }
+  };
+
+  function killAllChildren($el) {
+    for (var i = 0; i < $el.children().length; i++) {
+      $el.children().eq(i).remove();
+    }
+  }
+
+  function templ(name, data) {
+    return _.template(_.unescape($(name).html()))(data);
+  }
+
+  function $templ(name, data) {
+    return $("<div/>").html(templ(name, data));
+  }
+
+  function renderInfobar() {
+    function renderStat(key, value) {
+      var statHTML = _.template($(".stat-template").html())();
+      return $("<div/>").html(statHTML);
+    }
+
+    killAllChildren($(".infobar"));
+
+    var $infobar = $templ(".infobar-template", infobar).appendTo(".infobar");
+
+    // append stats
+
+    for (var key in infobar.information) {
+      var $el = $templ(".stat-template", { stat_name: key, stat_value: infobar.information[key] });
+      $infobar.find(".stats").append($el);
+    }
+  }
+
+  renderInfobar();
+
   function displaygrid(grid) {
     _.each(grid, function(row, i) {
       _.each(row, function(cell, j) {
@@ -155,4 +199,6 @@ $(function() {
   }
 
   main();
+
+  renderInfobar();
 });

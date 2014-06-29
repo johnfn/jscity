@@ -3,10 +3,21 @@
     <script src="src/jquery.js"></script>
     <script type="text/javascript" src="src/main.js"> </script>
     <script type="text/javascript" src="src/underscore.js"> </script>
+    <link rel="stylesheet" type="text/css" href="style/main.css" />
   </head>
   <body>
-    <div id="canvas-stack">
-      <canvas id="canvas" width="1000" height="1000"> </canvas>
+    <canvas id="canvas" width="1000" height="1000"> </canvas>
+    <div class="infobar">
+    </div>
+
+    <div class="infobar-template" style="display: none;">
+      <div class="name"> <%= selectionName %> </div>
+      <div class="stats">
+      </div>
+    </div>
+
+    <div class="stat-template" style="display: none;">
+      <b><%= stat_name %></b>: <%= stat_value %>
     </div>
   </body>
 </html>
