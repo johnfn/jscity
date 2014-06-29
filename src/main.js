@@ -66,11 +66,18 @@ $(function() {
     return "rgb(" + r + ", " + g + ", " + b + ")";
   }
 
+  var upperRangeBoundaries = [
+    {water: 0.3},
+    {land: 0.7},
+    {mountain: 0.9},
+    {snow: 1.0}
+  ];
+
   function intensityToColor(intensity) {
     var red, blue, green;
     var normalizedIntensity;
 
-    if (intensity < 0.3) {
+    if (intensity < upperRangeBoundaries.water) {
       // deepest areas are oceans, so calculate a water color via handwave.
 
       normalizedIntensity = intensity / 0.3;
@@ -78,7 +85,7 @@ $(function() {
       blue = normalizedIntensity * 100 + 155;
       green = normalizedIntensity * 80;
       red = 0;
-    } else if (intensity < 0.7) {
+    } else if (intensity < upperRangeBoundaries.land) {
       // middle areas are land, so reapply handwave technique
 
       normalizedIntensity = (intensity - 0.3) / 0.4;
@@ -87,7 +94,7 @@ $(function() {
       red = 0;
       blue = 0;
 
-    } else if (intensity < 0.90) {
+    } else if (intensity < upperRangeBoundaries.mountain) {
       // mountains
 
       normalizedIntensity = (intensity - 0.7) / 0.20;
@@ -174,7 +181,7 @@ $(function() {
   function renderInfobar() {
     killAllChildren($(".infobar"));
 
-    $(".infobar").append($renderTemplate(".infobar", infobar))
+    $(".infobar").append($renderTemplate(".infobar", infobar));
   }
 
   renderInfobar();
@@ -198,9 +205,19 @@ $(function() {
     return Math.floor(value / TILESIZE) * TILESIZE;
   }
 
+  function snapToIndex(value) {
+    return Math.floor(value / TILESIZE);
+  }
+
   function mousemove(e) {
     mouseX = e.pageX - $canvas.offset().left;
     mouseY = e.pageY - $canvas.offset().top;
+  }
+
+  function mousedown(e) {
+    var gridvalue = grid[snapToIndex(mouseX)][snapToIndex(mouseY)];
+
+    console.log(gridvalue);
   }
 
   function renderGrid(grid) {
@@ -225,6 +242,7 @@ $(function() {
 
     renderGrid(grid);
     $canvas.on("mousemove", mousemove);
+    $canvas.on("mousedown", mousedown);
 
     requestAnimationFrame(render);
   }
