@@ -108,11 +108,34 @@ $(function() {
 
   var infobar = {
     selectionName: "something",
-    information: {
+    stat: {
       height: "10",
       type: "land"
     }
   };
+
+  function $renderTemplate(template, data) {
+    var thisLevelData = {};
+    var $childTemplates = {};
+
+    for (var key in data) {
+      if (typeof data[key] === "object") {
+        $childTemplates[key] = $renderTemplate(template + "-" + key, data[key]);
+
+        continue;
+      }
+
+      thisLevelData[key] = data[key];
+    }
+
+    var $el = $templ(template + "-template", thisLevelData);
+
+    for (var classname in $childTemplates) {
+      $el.find("." + classname).append($childTemplates[classname]);
+    }
+
+    return $el;
+  }
 
   function killAllChildren($el) {
     for (var i = 0; i < $el.children().length; i++) {
@@ -129,21 +152,9 @@ $(function() {
   }
 
   function renderInfobar() {
-    function renderStat(key, value) {
-      var statHTML = _.template($(".stat-template").html())();
-      return $("<div/>").html(statHTML);
-    }
-
     killAllChildren($(".infobar"));
 
-    var $infobar = $templ(".infobar-template", infobar).appendTo(".infobar");
-
-    // append stats
-
-    for (var key in infobar.information) {
-      var $el = $templ(".stat-template", { stat_name: key, stat_value: infobar.information[key] });
-      $infobar.find(".stats").append($el);
-    }
+    $(".infobar").append($renderTemplate(".infobar", infobar))
   }
 
   renderInfobar();
