@@ -1,12 +1,54 @@
 $ ->
+  TILESIZE = 20
+  TILES = 50
+  SMOOTHNESS = 10
+  $canvas = $("#canvas")
+  context = $canvas[0].getContext("2d")
+  upperRangeBoundaries = [
+    {
+      name: "water"
+      value: 0.3
+    }
+    {
+      name: "land"
+      value: 0.7
+    }
+    {
+      name: "mountain"
+      value: 0.9
+    }
+    {
+      name: "snow"
+      value: 1.0
+    }
+  ]
+  infobar =
+    selectionName: "something"
+    stat: [
+      {
+        name: "type"
+        value: "land"
+      }
+      {
+        name: "height"
+        value: "10"
+      }
+    ]
+
+  grid = undefined
+  mouseX = 0
+  mouseY = 0
+
+
+
   makegrid = (x, y) ->
-    for x in [0...x]
-      for y in [0...y]
+    for i in [0...x]
+      for j in [0...y]
         0
 
   terrainize = (grid) ->
     # more iterations == more smoothness as we repeatedly make cells closer in value to their neighbors.
-    for interation in [0...SMOOTHNESS]
+    for iteration in [0...SMOOTHNESS]
       deltas = [{ x: 0, y: 1}, {x: 0, y: -1 },{ x: 1, y: 0 },{ x: -1, y: 0 }]
       for i in [0...grid.length]
         for j in [0...grid[0].length]
@@ -20,7 +62,7 @@ $ ->
             neighborScores += grid[new_i][new_j]
             neighbors++
 
-          grid[i][j] = neighborScores / neighbors + (6 * Math.random() - 3) / (iterations + 1)
+          grid[i][j] = (neighborScores / neighbors) + (6 * Math.random() - 3) / (iteration + 1)
     grid
 
 
@@ -179,46 +221,9 @@ $ ->
     $canvas.on "mousedown", mousedown
     requestAnimationFrame render
     return
-  TILESIZE = 20
-  TILES = 50
-  SMOOTHNESS = 10
-  $canvas = $("#canvas")
-  context = $canvas[0].getContext("2d")
-  upperRangeBoundaries = [
-    {
-      name: "water"
-      value: 0.3
-    }
-    {
-      name: "land"
-      value: 0.7
-    }
-    {
-      name: "mountain"
-      value: 0.9
-    }
-    {
-      name: "snow"
-      value: 1.0
-    }
-  ]
-  infobar =
-    selectionName: "something"
-    stat: [
-      {
-        name: "type"
-        value: "land"
-      }
-      {
-        name: "height"
-        value: "10"
-      }
-    ]
 
-  renderInfobar()
-  grid = undefined
-  mouseX = 0
-  mouseY = 0
+
+
   main()
   renderInfobar()
   return
