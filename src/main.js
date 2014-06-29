@@ -237,7 +237,6 @@ $(function() {
   function mousedown(e) {
     var gridvalue = grid[snapToIndex(mouseX)][snapToIndex(mouseY)];
 
-    debugger;
     infobar.selectionName = depthToLandType(gridvalue);
     infobar.stat = [
       { name: "height", value: gridvalue * 100}
@@ -247,7 +246,7 @@ $(function() {
   }
 
   function renderGrid(grid) {
-    displaygrid(normalize(grid));
+    displaygrid(grid);
   }
 
   function renderSelection() {
@@ -264,7 +263,7 @@ $(function() {
 
   function main() {
     // It annoys me that these are in reverse order.
-    grid = terrainize(makegrid(TILES, TILES));
+    grid = normalize(terrainize(makegrid(TILES, TILES)));
 
     renderGrid(grid);
     $canvas.on("mousemove", mousemove);
