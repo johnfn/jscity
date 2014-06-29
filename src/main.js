@@ -237,7 +237,13 @@ $(function() {
   function mousedown(e) {
     var gridvalue = grid[snapToIndex(mouseX)][snapToIndex(mouseY)];
 
-    console.log(depthToLandType(gridvalue));
+    debugger;
+    infobar.selectionName = depthToLandType(gridvalue);
+    infobar.stat = [
+      { name: "height", value: gridvalue * 100}
+    ];
+
+    renderInfobar();
   }
 
   function renderGrid(grid) {
