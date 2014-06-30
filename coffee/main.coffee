@@ -1,5 +1,4 @@
 Function::getter = (prop, get) -> Object.defineProperty @prototype, prop, {get, configurable: yes}
-
 Function::setter = (prop, set) -> Object.defineProperty @prototype, prop, {set, configurable: yes}
 
 $ ->
@@ -9,7 +8,7 @@ $ ->
 
   $canvas = $("#canvas")
   context = $canvas[0].getContext("2d")
-  mouse = undefined
+
   upperRangeBoundaries = [
     {
       name: "water"
@@ -29,9 +28,10 @@ $ ->
     }
   ]
 
+
   class Infobar
     constructor: (@grid) ->
-      mouse.onclick (mi) => @click(mi)
+      G.mouse.onclick (mi) => @click(mi)
 
       @data =
         selectionName: "something"
@@ -45,7 +45,7 @@ $ ->
         ]
 
     click: (mouseinfo) ->
-      value = grid.valueAt(mouseinfo.tilex, mouseinfo.tiley)
+      value = G.grid.valueAt(mouseinfo.tilex, mouseinfo.tiley)
 
       @data.selectionName = depthToLandType(value)
       @data.stat = [
@@ -59,13 +59,6 @@ $ ->
       killAllChildren $(".infobar")
       $(".infobar").append $renderTemplate(".infobar", @data)
 
-  grid = undefined
-
-  infobar = undefined
-
-
-  rgb = (r, g, b) ->
-    "rgb(#{Math.floor(r)}, #{Math.floor(g)}, #{Math.floor(b)})"
 
   getBoundary = (name) ->
     for i in [0...upperRangeBoundaries.length] when upperRangeBoundaries[i].name == name
@@ -111,7 +104,7 @@ $ ->
 
       # snowpeaks!
       red = blue = green = Math.floor(intensity * 255)
-    rgb red, green, blue
+    G.rgb red, green, blue
 
   #
   #   * 20-line-long-better-than-backbone templating.
@@ -193,8 +186,9 @@ $ ->
     constructor: (@x, @y) ->
       @children = []
 
-    add: (child) ->
-      @children.push(child)
+    add: (child) -> @children.push(child); @
+
+    addTo: (entity) -> entity.children.push(@); @
 
     render: (context) -> console.log("reimplement!")
 
@@ -247,26 +241,27 @@ $ ->
           context.fillRect i * TILESIZE, j * TILESIZE, TILESIZE, TILESIZE
 
   renderSelection = ->
-    context.fillStyle = rgb(0, 0, 0)
-    context.strokeRect snapToGrid(mouse.x), snapToGrid(mouse.y), TILESIZE, TILESIZE
+    context.fillStyle = G.rgb(0, 0, 0)
+    context.strokeRect snapToGrid(G.mouse.x), snapToGrid(G.mouse.y), TILESIZE, TILESIZE
 
-  stage = new Entity()
-  grid = new Grid(TILES, TILES)
-  stage.add(grid)
+  renderLoop = ->
+    G.stage._render(context)
 
-  render = ->
-    stage._render(context)
-
-    #renderGrid grid
     renderSelection()
-    requestAnimationFrame render
+    requestAnimationFrame renderLoop
+
+  # globals
+  G = {}
+  G.mouse   = new Mouse($canvas)
+  G.stage   = new Entity()
+  G.grid    = new Grid(TILES, TILES).addTo(G.stage)
+  G.infobar = new Infobar(G.grid)
+  G.rgb     = (r, g, b) -> "rgb(#{Math.floor(r)}, #{Math.floor(g)}, #{Math.floor(b)})"
 
   main = ->
     # It annoys me that these are in reverse order.
-    mouse = new Mouse($canvas)
-    infobar = new Infobar(grid)
-    infobar.render()
+    G.infobar.render()
 
-    requestAnimationFrame render
+    requestAnimationFrame renderLoop
 
   main()
