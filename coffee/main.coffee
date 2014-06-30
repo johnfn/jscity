@@ -1,9 +1,15 @@
+Function::getter = (prop, get) -> Object.defineProperty @prototype, prop, {get, configurable: yes}
+
+Function::setter = (prop, set) -> Object.defineProperty @prototype, prop, {set, configurable: yes}
+
 $ ->
   TILESIZE = 20
   TILES = 50
   SMOOTHNESS = 10
+
   $canvas = $("#canvas")
   context = $canvas[0].getContext("2d")
+  mouse = undefined
   upperRangeBoundaries = [
     {
       name: "water"
@@ -23,18 +29,43 @@ $ ->
     }
   ]
 
-  infobar =
-    selectionName: "something"
-    stat: [
-      { name: "type", value: "land" }
-      { name: "height", value: "10" }
-    ]
-    buttons: [
-      { name: "Power Plant" }
-      { name: "Road" }
-    ]
+  class Infobar
+    constructor: (@grid) ->
+      mouse.onclick (mi) => @click(mi)
+
+      @data =
+        selectionName: "something"
+        stat: [
+          { name: "type", value: "land" }
+          { name: "height", value: "10" }
+        ]
+        buttons: [
+          { name: "Power Plant" }
+          { name: "Road" }
+        ]
+
+    click: (mouseinfo) ->
+      console.log("click")
+
+    render: () ->
+      killAllChildren $(".infobar")
+      $(".infobar").append $renderTemplate(".infobar", @data)
+
+      ###
+      infobar.click()
+      gridvalue = grid[snapToIndex(mouseX)][snapToIndex(mouseY)]
+      infobar.selectionName = depthToLandType(gridvalue)
+      infobar.stat = [
+        name: "height"
+        value: gridvalue * 100
+      ]
+      renderInfobar()
+      ###
+
 
   grid = undefined
+
+  infobar = undefined
   mouseX = 0
   mouseY = 0
 
@@ -166,10 +197,6 @@ $ ->
   $templ = (name, data) ->
     $("<span/>").html templ(name, data)
 
-  renderInfobar = ->
-    killAllChildren $(".infobar")
-    $(".infobar").append $renderTemplate(".infobar", infobar)
-
   displaygrid = (grid) ->
     _.each grid, (row, i) ->
       _.each row, (cell, j) ->
@@ -179,20 +206,33 @@ $ ->
 
   snapToGrid = (value) -> Math.floor(value / TILESIZE) * TILESIZE
 
-  snapToIndex = (value) -> Math.floor value / TILESIZE
+  class Game
+    constructor: () ->
+      console.log("bleh")
 
-  mousemove = (e) ->
-    mouseX = e.pageX - $canvas.offset().left
-    mouseY = e.pageY - $canvas.offset().top
+  class MouseInfo
+    constructor: (@x, @y, @tilex, @tiley) ->
 
-  mousedown = (e) ->
-    gridvalue = grid[snapToIndex(mouseX)][snapToIndex(mouseY)]
-    infobar.selectionName = depthToLandType(gridvalue)
-    infobar.stat = [
-      name: "height"
-      value: gridvalue * 100
-    ]
-    renderInfobar()
+  class Mouse
+    constructor: ($canvas) ->
+      $canvas.on "mousemove", (e) => @mousemove(e)
+      $canvas.on "mousedown", (e) => @mousedown(e)
+
+      @mouseX = @mouseY = 0
+      @callbacks = []
+
+    onclick: (cb) ->
+      @callbacks.push(cb)
+
+    mousemove: (e) ->
+      @mouseX = e.pageX - $canvas.offset().left
+      @mouseY = e.pageY - $canvas.offset().top
+
+    snapToIndex: (value) -> Math.floor value / TILESIZE
+
+    mousedown: (e) ->
+      mi = new MouseInfo(@mouseX, @mouseY, @snapToIndex(@mouseX), @snapToIndex(@mouseY))
+      callback(mi) for callback in @callbacks
 
   renderGrid = (grid) ->
     displaygrid grid
@@ -209,10 +249,11 @@ $ ->
   main = ->
     # It annoys me that these are in reverse order.
     grid = normalize(terrainize(makegrid(TILES, TILES)))
+    mouse = new Mouse($canvas)
+    infobar = new Infobar(grid)
+    infobar.render()
+
     renderGrid grid
-    $canvas.on "mousemove", mousemove
-    $canvas.on "mousedown", mousedown
     requestAnimationFrame render
 
   main()
-  renderInfobar()
