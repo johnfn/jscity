@@ -60,10 +60,6 @@ $ ->
       $(".infobar").append $renderTemplate(".infobar", @data)
 
 
-  getBoundary = (name) ->
-    for i in [0...upperRangeBoundaries.length] when upperRangeBoundaries[i].name == name
-      return upperRangeBoundaries[i].value
-
   depthToLandType = (depth) ->
     for i in [0...upperRangeBoundaries.length] when depth <= upperRangeBoundaries[i].value
       return upperRangeBoundaries[i].name
@@ -71,40 +67,6 @@ $ ->
     # should never be executed, but just in case.
     # maybe they developed terraforming.
     upperRangeBoundaries[upperRangeBoundaries.length - 1].name
-
-  intensityToColor = (intensity) ->
-    red = undefined
-    blue = undefined
-    green = undefined
-    normalizedIntensity = undefined
-
-    # REFACTORING need to move the color calc functions into upperRangeBoundaries fn.
-    if intensity < getBoundary("water")
-
-      # deepest areas are oceans, so calculate a water color via handwave.
-      normalizedIntensity = intensity / 0.3
-      blue = normalizedIntensity * 100 + 155
-      green = normalizedIntensity * 80
-      red = 0
-    else if intensity < getBoundary("land")
-
-      # middle areas are land, so reapply handwave technique
-      normalizedIntensity = (intensity - 0.3) / 0.4
-      green = (1 - normalizedIntensity) * 100 + 100
-      red = 0
-      blue = 0
-    else if intensity < getBoundary("mountain")
-
-      # mountains
-      normalizedIntensity = (intensity - 0.7) / 0.20
-      red = 100 - intensity * 60
-      blue = 0
-      green = 50
-    else
-
-      # snowpeaks!
-      red = blue = green = Math.floor(intensity * 255)
-    G.rgb red, green, blue
 
   #
   #   * 20-line-long-better-than-backbone templating.
@@ -206,6 +168,44 @@ $ ->
       @terrainize()
       @normalize()
 
+    getBoundary: (name) ->
+      for i in [0...upperRangeBoundaries.length] when upperRangeBoundaries[i].name == name
+        return upperRangeBoundaries[i].value
+
+    intensityToColor: (intensity) ->
+      red = undefined
+      blue = undefined
+      green = undefined
+      normalizedIntensity = undefined
+
+      # REFACTORING need to move the color calc functions into upperRangeBoundaries fn.
+      if intensity < @getBoundary("water")
+
+        # deepest areas are oceans, so calculate a water color via handwave.
+        normalizedIntensity = intensity / 0.3
+        blue = normalizedIntensity * 100 + 155
+        green = normalizedIntensity * 80
+        red = 0
+      else if intensity < @getBoundary("land")
+
+        # middle areas are land, so reapply handwave technique
+        normalizedIntensity = (intensity - 0.3) / 0.4
+        green = (1 - normalizedIntensity) * 100 + 100
+        red = 0
+        blue = 0
+      else if intensity < @getBoundary("mountain")
+
+        # mountains
+        normalizedIntensity = (intensity - 0.7) / 0.20
+        red = 100 - intensity * 60
+        blue = 0
+        green = 50
+      else
+
+        # snowpeaks!
+        red = blue = green = Math.floor(intensity * 255)
+      G.rgb red, green, blue
+
     terrainize: () ->
       # more iterations == more smoothness as we repeatedly make cells closer in value to their neighbors.
       deltas = [{ x: 0, y: 1}, {x: 0, y: -1 },{ x: 1, y: 0 },{ x: -1, y: 0 }]
@@ -235,9 +235,9 @@ $ ->
       @grid = ((elem - lowest) / (highest - lowest) for elem in row for row in @grid)
 
     render: (context) ->
-      _.each @grid, (row, i) ->
-        _.each row, (cell, j) ->
-          context.fillStyle = intensityToColor(cell)
+      for i in [0...@grid.length]
+        for j in [0...@grid[i].length]
+          context.fillStyle = @intensityToColor(@valueAt(i, j))
           context.fillRect i * TILESIZE, j * TILESIZE, TILESIZE, TILESIZE
 
   renderSelection = ->
