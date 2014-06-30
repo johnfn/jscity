@@ -45,6 +45,7 @@ $ ->
         ]
 
     click: (mouseinfo) ->
+      # TODO broken
       value = grid[mouseinfo.tilex][mouseinfo.tiley]
       @data.selectionName = depthToLandType(value)
       @data.stat = [
@@ -61,41 +62,7 @@ $ ->
   grid = undefined
 
   infobar = undefined
-  mouseX = 0
-  mouseY = 0
 
-  makegrid = (x, y) ->
-    for i in [0...x]
-      for j in [0...y]
-        0
-
-  terrainize = (grid) ->
-    # more iterations == more smoothness as we repeatedly make cells closer in value to their neighbors.
-    deltas = [{ x: 0, y: 1}, {x: 0, y: -1 },{ x: 1, y: 0 },{ x: -1, y: 0 }]
-
-    for iteration in [0...SMOOTHNESS]
-      for i in [0...grid.length]
-        for j in [0...grid[0].length]
-          neighborScores = 0
-          neighbors = 0
-
-          for k in [0...deltas.length]
-            new_i = i + deltas[k].x
-            new_j = j + deltas[k].y
-            continue if new_i < 0 or new_i >= grid.length or new_j < 0 or new_j >= grid[0].length
-            neighborScores += grid[new_i][new_j]
-            neighbors++
-
-          grid[i][j] = (neighborScores / neighbors) + (6 * Math.random() - 3) / (iteration + 1)
-    grid
-
-
-  normalize = (grid) ->
-    highest = _.chain(grid).flatten().max().value()
-    lowest = _.chain(grid).flatten().min().value()
-
-    _.map grid, (row) ->
-      _.map row, (elem) -> (elem - lowest) / (highest - lowest)
 
   rgb = (r, g, b) ->
     "rgb(#{Math.floor(r)}, #{Math.floor(g)}, #{Math.floor(b)})"
@@ -192,13 +159,6 @@ $ ->
   $templ = (name, data) ->
     $("<span/>").html templ(name, data)
 
-  displaygrid = (grid) ->
-    _.each grid, (row, i) ->
-      _.each row, (cell, j) ->
-        context.fillStyle = intensityToColor(cell)
-        context.fillRect i * TILESIZE, j * TILESIZE, TILESIZE, TILESIZE
-    grid
-
   snapToGrid = (value) -> Math.floor(value / TILESIZE) * TILESIZE
 
   class Game
@@ -213,42 +173,98 @@ $ ->
       $canvas.on "mousemove", (e) => @mousemove(e)
       $canvas.on "mousedown", (e) => @mousedown(e)
 
-      @mouseX = @mouseY = 0
+      @x = @y = 0
       @callbacks = []
 
     onclick: (cb) ->
       @callbacks.push(cb)
 
     mousemove: (e) ->
-      @mouseX = e.pageX - $canvas.offset().left
-      @mouseY = e.pageY - $canvas.offset().top
+      @x = e.pageX - $canvas.offset().left
+      @y = e.pageY - $canvas.offset().top
 
     snapToIndex: (value) -> Math.floor value / TILESIZE
 
     mousedown: (e) ->
-      mi = new MouseInfo(@mouseX, @mouseY, @snapToIndex(@mouseX), @snapToIndex(@mouseY))
+      mi = new MouseInfo(@x, @y, @snapToIndex(@x), @snapToIndex(@y))
       callback(mi) for callback in @callbacks
 
-  renderGrid = (grid) ->
-    displaygrid grid
+  class Entity
+    constructor: (@x, @y) ->
+      @children = []
+
+    add: (child) ->
+      @children.push(child)
+
+    render: (context) -> console.log("reimplement!")
+
+    _render: (context) ->
+      context.translate(@x, @y)
+
+      @render(context)
+      child.render(context) for child in @children
+
+      context.translate(-@x, -@y)
+
+  class Grid extends Entity
+    constructor: (w, h) ->
+      @grid = (0 for i in [0...w] for j in [0...h])
+      @terrainize()
+      @normalize()
+
+    terrainize: () ->
+      # more iterations == more smoothness as we repeatedly make cells closer in value to their neighbors.
+      deltas = [{ x: 0, y: 1}, {x: 0, y: -1 },{ x: 1, y: 0 },{ x: -1, y: 0 }]
+
+      for iteration in [0...SMOOTHNESS]
+        for i in [0...@grid.length]
+          for j in [0...@grid[0].length]
+            neighborScores = 0
+            neighbors = 0
+
+            for k in [0...deltas.length]
+              new_i = i + deltas[k].x
+              new_j = j + deltas[k].y
+              continue if new_i < 0 or new_i >= @grid.length or new_j < 0 or new_j >= @grid[0].length
+              neighborScores += @grid[new_i][new_j]
+              neighbors++
+
+            @grid[i][j] = (neighborScores / neighbors) + (6 * Math.random() - 3) / (iteration + 1)
+      @grid
+
+    normalize: () ->
+      highest = Math.max _.flatten(@grid)...
+      lowest = Math.min _.flatten(@grid)...
+
+      @grid = ((elem - lowest) / (highest - lowest) for elem in row for row in @grid)
+
+    render: (context) ->
+      _.each @grid, (row, i) ->
+        _.each row, (cell, j) ->
+          context.fillStyle = intensityToColor(cell)
+          context.fillRect i * TILESIZE, j * TILESIZE, TILESIZE, TILESIZE
 
   renderSelection = ->
     context.fillStyle = rgb(0, 0, 0)
-    context.strokeRect snapToGrid(mouseX), snapToGrid(mouseY), TILESIZE, TILESIZE
+    context.strokeRect snapToGrid(mouse.x), snapToGrid(mouse.y), TILESIZE, TILESIZE
+
+  stage = new Entity()
+  grid = new Grid(TILES, TILES)
+  stage.add(grid)
 
   render = ->
-    renderGrid grid
+    stage._render(context)
+
+    #renderGrid grid
     renderSelection()
     requestAnimationFrame render
 
   main = ->
     # It annoys me that these are in reverse order.
-    grid = normalize(terrainize(makegrid(TILES, TILES)))
     mouse = new Mouse($canvas)
     infobar = new Infobar(grid)
     infobar.render()
 
-    renderGrid grid
     requestAnimationFrame render
 
   main()
