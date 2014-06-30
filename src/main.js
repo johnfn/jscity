@@ -67,23 +67,21 @@
       }
 
       Infobar.prototype.click = function(mouseinfo) {
-        return console.log("click");
+        var value;
+        value = grid[mouseinfo.tilex][mouseinfo.tiley];
+        this.data.selectionName = depthToLandType(value);
+        this.data.stat = [
+          {
+            name: "height",
+            value: Math.floor(value * 100)
+          }
+        ];
+        return this.render();
       };
 
       Infobar.prototype.render = function() {
         killAllChildren($(".infobar"));
         return $(".infobar").append($renderTemplate(".infobar", this.data));
-
-        /*
-        infobar.click()
-        gridvalue = grid[snapToIndex(mouseX)][snapToIndex(mouseY)]
-        infobar.selectionName = depthToLandType(gridvalue)
-        infobar.stat = [
-          name: "height"
-          value: gridvalue * 100
-        ]
-        renderInfobar()
-         */
       };
 
       return Infobar;

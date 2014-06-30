@@ -45,23 +45,18 @@ $ ->
         ]
 
     click: (mouseinfo) ->
-      console.log("click")
+      value = grid[mouseinfo.tilex][mouseinfo.tiley]
+      @data.selectionName = depthToLandType(value)
+      @data.stat = [
+        name: "height"
+        value: Math.floor(value * 100)
+      ]
+
+      @render()
 
     render: () ->
       killAllChildren $(".infobar")
       $(".infobar").append $renderTemplate(".infobar", @data)
-
-      ###
-      infobar.click()
-      gridvalue = grid[snapToIndex(mouseX)][snapToIndex(mouseY)]
-      infobar.selectionName = depthToLandType(gridvalue)
-      infobar.stat = [
-        name: "height"
-        value: gridvalue * 100
-      ]
-      renderInfobar()
-      ###
-
 
   grid = undefined
 
