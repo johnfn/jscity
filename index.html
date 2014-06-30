@@ -1,9 +1,12 @@
 <html>
   <head>
     <script src="src/jquery.js"></script>
+    <script src="js/bootstrap.min.js"></script>
     <script type="text/javascript" src="src/main.js"> </script>
     <script type="text/javascript" src="src/underscore.js"> </script>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="style/main.css" />
+
   </head>
   <body>
     <canvas id="canvas" width="1000" height="1000"> </canvas>
@@ -14,6 +17,17 @@
       <div class="name"> <%= selectionName %> </div>
       <div class="stat">
       </div>
+      <div class="toolbar">
+        <div class="header"> Build </div>
+        <div class="buttons">
+        </div>
+      </div>
+    </div>
+
+    <div class="infobar-buttons-template" style="display: none;">
+      <button type="button" class="btn btn-default btn-sm">
+        <%= name %>
+      </button>
     </div>
 
     <div class="infobar-stat-template" style="display: none;">

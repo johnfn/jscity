@@ -22,24 +22,21 @@ $ ->
       value: 1.0
     }
   ]
+
   infobar =
     selectionName: "something"
     stat: [
-      {
-        name: "type"
-        value: "land"
-      }
-      {
-        name: "height"
-        value: "10"
-      }
+      { name: "type", value: "land" }
+      { name: "height", value: "10" }
+    ]
+    buttons: [
+      { name: "Power Plant" }
+      { name: "Road" }
     ]
 
   grid = undefined
   mouseX = 0
   mouseY = 0
-
-
 
   makegrid = (x, y) ->
     for i in [0...x]
@@ -48,8 +45,9 @@ $ ->
 
   terrainize = (grid) ->
     # more iterations == more smoothness as we repeatedly make cells closer in value to their neighbors.
+    deltas = [{ x: 0, y: 1}, {x: 0, y: -1 },{ x: 1, y: 0 },{ x: -1, y: 0 }]
+
     for iteration in [0...SMOOTHNESS]
-      deltas = [{ x: 0, y: 1}, {x: 0, y: -1 },{ x: 1, y: 0 },{ x: -1, y: 0 }]
       for i in [0...grid.length]
         for j in [0...grid[0].length]
           neighborScores = 0
@@ -58,7 +56,7 @@ $ ->
           for k in [0...deltas.length]
             new_i = i + deltas[k].x
             new_j = j + deltas[k].y
-            continue  if new_i < 0 or new_i >= grid.length or new_j < 0 or new_j >= grid[0].length
+            continue if new_i < 0 or new_i >= grid.length or new_j < 0 or new_j >= grid[0].length
             neighborScores += grid[new_i][new_j]
             neighbors++
 
@@ -122,8 +120,6 @@ $ ->
       red = blue = green = Math.floor(intensity * 255)
     rgb red, green, blue
 
-  # INFOBAR
-
   #
   #   * 20-line-long-better-than-backbone templating.
   #   *
@@ -152,45 +148,43 @@ $ ->
       else
         thisLevelData[key] = data[key]
     $el = $templ(template + "-template", thisLevelData)
-    classname = undefined
+
     for classname of $childTemplates
       $el.find("." + classname).append $childTemplates[classname]
+
     for classname of $childTemplateLists
       $el.find("." + classname).append $childTemplateLists[classname]
-    $el
-  killAllChildren = ($el) ->
-    i = 0
 
-    while i < $el.children().length
-      $el.children().eq(i).remove()
-      i++
-    return
+    $el
+
+  killAllChildren = ($el) ->
+    $(child).remove() for child in $el.children()
+
   templ = (name, data) ->
     _.template(_.unescape($(name).html())) data
+
   $templ = (name, data) ->
-    $("<div/>").html templ(name, data)
+    $("<span/>").html templ(name, data)
+
   renderInfobar = ->
     killAllChildren $(".infobar")
     $(".infobar").append $renderTemplate(".infobar", infobar)
-    return
+
   displaygrid = (grid) ->
     _.each grid, (row, i) ->
       _.each row, (cell, j) ->
         context.fillStyle = intensityToColor(cell)
         context.fillRect i * TILESIZE, j * TILESIZE, TILESIZE, TILESIZE
-        return
-
-      return
-
     grid
-  snapToGrid = (value) ->
-    Math.floor(value / TILESIZE) * TILESIZE
-  snapToIndex = (value) ->
-    Math.floor value / TILESIZE
+
+  snapToGrid = (value) -> Math.floor(value / TILESIZE) * TILESIZE
+
+  snapToIndex = (value) -> Math.floor value / TILESIZE
+
   mousemove = (e) ->
     mouseX = e.pageX - $canvas.offset().left
     mouseY = e.pageY - $canvas.offset().top
-    return
+
   mousedown = (e) ->
     gridvalue = grid[snapToIndex(mouseX)][snapToIndex(mouseY)]
     infobar.selectionName = depthToLandType(gridvalue)
@@ -199,31 +193,26 @@ $ ->
       value: gridvalue * 100
     ]
     renderInfobar()
-    return
+
   renderGrid = (grid) ->
     displaygrid grid
-    return
+
   renderSelection = ->
     context.fillStyle = rgb(0, 0, 0)
     context.strokeRect snapToGrid(mouseX), snapToGrid(mouseY), TILESIZE, TILESIZE
-    return
+
   render = ->
     renderGrid grid
     renderSelection()
     requestAnimationFrame render
-    return
-  main = ->
 
+  main = ->
     # It annoys me that these are in reverse order.
     grid = normalize(terrainize(makegrid(TILES, TILES)))
     renderGrid grid
     $canvas.on "mousemove", mousemove
     $canvas.on "mousedown", mousedown
     requestAnimationFrame render
-    return
-
-
 
   main()
   renderInfobar()
-  return

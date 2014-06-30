@@ -2,7 +2,17 @@ canvas {
   float: left;
 }
 
-#information {
+.infobar {
   float: left;
   padding-left: 10px;
+}
+
+.toolbar {
+  .header {
+
+  }
+
+  border-top: 1px solid #ccc;
+  margin-top: 30px;
+  padding-top: 10px;
 }

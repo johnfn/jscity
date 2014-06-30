@@ -32,6 +32,13 @@
           name: "height",
           value: "10"
         }
+      ],
+      buttons: [
+        {
+          name: "Power Plant"
+        }, {
+          name: "Road"
+        }
       ]
     };
     grid = void 0;
@@ -54,22 +61,22 @@
     };
     terrainize = function(grid) {
       var deltas, i, iteration, j, k, neighborScores, neighbors, new_i, new_j, _i, _j, _k, _l, _ref, _ref1, _ref2;
+      deltas = [
+        {
+          x: 0,
+          y: 1
+        }, {
+          x: 0,
+          y: -1
+        }, {
+          x: 1,
+          y: 0
+        }, {
+          x: -1,
+          y: 0
+        }
+      ];
       for (iteration = _i = 0; 0 <= SMOOTHNESS ? _i < SMOOTHNESS : _i > SMOOTHNESS; iteration = 0 <= SMOOTHNESS ? ++_i : --_i) {
-        deltas = [
-          {
-            x: 0,
-            y: 1
-          }, {
-            x: 0,
-            y: -1
-          }, {
-            x: 1,
-            y: 0
-          }, {
-            x: -1,
-            y: 0
-          }
-        ];
         for (i = _j = 0, _ref = grid.length; 0 <= _ref ? _j < _ref : _j > _ref; i = 0 <= _ref ? ++_j : --_j) {
           for (j = _k = 0, _ref1 = grid[0].length; 0 <= _ref1 ? _k < _ref1 : _k > _ref1; j = 0 <= _ref1 ? ++_k : --_k) {
             neighborScores = 0;
@@ -166,7 +173,6 @@
         }
       }
       $el = $templ(template + "-template", thisLevelData);
-      classname = void 0;
       for (classname in $childTemplates) {
         $el.find("." + classname).append($childTemplates[classname]);
       }
@@ -176,28 +182,30 @@
       return $el;
     };
     killAllChildren = function($el) {
-      var i;
-      i = 0;
-      while (i < $el.children().length) {
-        $el.children().eq(i).remove();
-        i++;
+      var child, _i, _len, _ref, _results;
+      _ref = $el.children();
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        child = _ref[_i];
+        _results.push($(child).remove());
       }
+      return _results;
     };
     templ = function(name, data) {
       return _.template(_.unescape($(name).html()))(data);
     };
     $templ = function(name, data) {
-      return $("<div/>").html(templ(name, data));
+      return $("<span/>").html(templ(name, data));
     };
     renderInfobar = function() {
       killAllChildren($(".infobar"));
-      $(".infobar").append($renderTemplate(".infobar", infobar));
+      return $(".infobar").append($renderTemplate(".infobar", infobar));
     };
     displaygrid = function(grid) {
       _.each(grid, function(row, i) {
-        _.each(row, function(cell, j) {
+        return _.each(row, function(cell, j) {
           context.fillStyle = intensityToColor(cell);
-          context.fillRect(i * TILESIZE, j * TILESIZE, TILESIZE, TILESIZE);
+          return context.fillRect(i * TILESIZE, j * TILESIZE, TILESIZE, TILESIZE);
         });
       });
       return grid;
@@ -210,7 +218,7 @@
     };
     mousemove = function(e) {
       mouseX = e.pageX - $canvas.offset().left;
-      mouseY = e.pageY - $canvas.offset().top;
+      return mouseY = e.pageY - $canvas.offset().top;
     };
     mousedown = function(e) {
       var gridvalue;
@@ -222,29 +230,29 @@
           value: gridvalue * 100
         }
       ];
-      renderInfobar();
+      return renderInfobar();
     };
     renderGrid = function(grid) {
-      displaygrid(grid);
+      return displaygrid(grid);
     };
     renderSelection = function() {
       context.fillStyle = rgb(0, 0, 0);
-      context.strokeRect(snapToGrid(mouseX), snapToGrid(mouseY), TILESIZE, TILESIZE);
+      return context.strokeRect(snapToGrid(mouseX), snapToGrid(mouseY), TILESIZE, TILESIZE);
     };
     render = function() {
       renderGrid(grid);
       renderSelection();
-      requestAnimationFrame(render);
+      return requestAnimationFrame(render);
     };
     main = function() {
       grid = normalize(terrainize(makegrid(TILES, TILES)));
       renderGrid(grid);
       $canvas.on("mousemove", mousemove);
       $canvas.on("mousedown", mousedown);
-      requestAnimationFrame(render);
+      return requestAnimationFrame(render);
     };
     main();
-    renderInfobar();
+    return renderInfobar();
   });
 
 }).call(this);
