@@ -45,8 +45,8 @@ $ ->
         ]
 
     click: (mouseinfo) ->
-      # TODO broken
-      value = grid[mouseinfo.tilex][mouseinfo.tiley]
+      value = grid.valueAt(mouseinfo.tilex, mouseinfo.tiley)
+
       @data.selectionName = depthToLandType(value)
       @data.stat = [
         name: "height"
@@ -231,6 +231,8 @@ $ ->
 
             @grid[i][j] = (neighborScores / neighbors) + (6 * Math.random() - 3) / (iteration + 1)
       @grid
+
+    valueAt: (x,y) -> @grid[x][y]
 
     normalize: () ->
       highest = Math.max _.flatten(@grid)...
