@@ -114,8 +114,6 @@ $ ->
   $templ = (name, data) ->
     $("<span/>").html templ(name, data)
 
-  snapToGrid = (value) -> Math.floor(value / TILESIZE) * TILESIZE
-
   class Game
     constructor: () ->
       console.log("bleh")
@@ -155,16 +153,31 @@ $ ->
     render: (context) -> console.log("reimplement!")
 
     _render: (context) ->
-      context.translate(@x, @y)
-
       @render(context)
-      child.render(context) for child in @children
 
+      context.translate(@x, @y)
+      child._render(context) for child in @children
       context.translate(-@x, -@y)
+
+  class Selection extends Entity
+    constructor: () -> super(0, 0)
+
+    snapToGrid: (value) -> Math.floor(value / TILESIZE) * TILESIZE
+
+    render: (context) ->
+      @x = @snapToGrid(G.mouse.x)
+      @y = @snapToGrid(G.mouse.y)
+
+      context.fillStyle = G.rgb(0, 0, 0)
+      context.strokeRect @x, @y, TILESIZE, TILESIZE
 
   class Grid extends Entity
     constructor: (w, h) ->
+      super(0, 0)
+
       @grid = (0 for i in [0...w] for j in [0...h])
+      @selection = new Selection().addTo(@)
+
       @terrainize()
       @normalize()
 
@@ -240,23 +253,19 @@ $ ->
           context.fillStyle = @intensityToColor(@valueAt(i, j))
           context.fillRect i * TILESIZE, j * TILESIZE, TILESIZE, TILESIZE
 
-  renderSelection = ->
-    context.fillStyle = G.rgb(0, 0, 0)
-    context.strokeRect snapToGrid(G.mouse.x), snapToGrid(G.mouse.y), TILESIZE, TILESIZE
-
   renderLoop = ->
     G.stage._render(context)
 
-    renderSelection()
     requestAnimationFrame renderLoop
 
   # globals
   G = {}
-  G.mouse   = new Mouse($canvas)
-  G.stage   = new Entity()
-  G.grid    = new Grid(TILES, TILES).addTo(G.stage)
-  G.infobar = new Infobar(G.grid)
-  G.rgb     = (r, g, b) -> "rgb(#{Math.floor(r)}, #{Math.floor(g)}, #{Math.floor(b)})"
+  G.mouse     = new Mouse($canvas)
+  G.stage     = new Entity()
+  G.grid      = new Grid(TILES, TILES).addTo(G.stage)
+  G.infobar   = new Infobar(G.grid)
+  G.rgb       = (r, g, b) -> "rgb(#{Math.floor(r)}, #{Math.floor(g)}, #{Math.floor(b)})"
+  G.selection = undefined
 
   main = ->
     # It annoys me that these are in reverse order.
