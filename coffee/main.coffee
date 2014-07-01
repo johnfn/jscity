@@ -12,111 +12,6 @@ $ ->
   $canvas = $("#canvas")
   context = $canvas[0].getContext("2d")
 
-  upperRangeBoundaries = [
-    {
-      name: "water"
-      value: 0.3
-    }
-    {
-      name: "land"
-      value: 0.7
-    }
-    {
-      name: "mountain"
-      value: 0.9
-    }
-    {
-      name: "snow"
-      value: 1.0
-    }
-  ]
-
-
-  class Infobar
-    constructor: (@grid) ->
-      G.mouse.click (mi) => @click(mi)
-
-      @data =
-        selectionName: "something"
-        stat: [
-          { name: "type", value: "land" }
-          { name: "height", value: "10" }
-        ]
-        buttons: [
-          { name: "Power Plant" }
-          { name: "Road" }
-        ]
-
-    click: (mouseinfo) ->
-      value = G.grid.valueAt(mouseinfo.tilex, mouseinfo.tiley)
-
-      @data.selectionName = depthToLandType(value)
-      @data.stat = [
-        name: "height"
-        value: Math.floor(value * 100)
-      ]
-
-      @render()
-
-    render: () ->
-      killAllChildren $(".infobar")
-      $(".infobar").append $renderTemplate(".infobar", @data)
-
-
-  depthToLandType = (depth) ->
-    for i in [0...upperRangeBoundaries.length] when depth <= upperRangeBoundaries[i].value
-      return upperRangeBoundaries[i].name
-
-    # should never be executed, but just in case.
-    # maybe they developed terraforming.
-    upperRangeBoundaries[upperRangeBoundaries.length - 1].name
-
-  #
-  #   * 20-line-long-better-than-backbone templating.
-  #   *
-  #   * An object is a template.
-  #   * A key is a value on that template. If it's an object, it's a subtemplate.
-  #   * An array is a list of templates.
-  #   *
-  #
-  $renderTemplate = (template, data) ->
-    thisLevelData = {}
-    $childTemplates = {}
-    $childTemplateLists = {}
-    for key of data
-      if _.isArray(data[key])
-        templateList = []
-        i = 0
-
-        while i < data[key].length
-          templateList.push $renderTemplate(template + "-" + key, data[key][i])
-          i++
-        $childTemplateLists[key] = templateList
-
-      # _.isObject([]) == "true" WUT WUT WUT
-      else if _.isObject(data[key])
-        $childTemplates[key] = $renderTemplate(template + "-" + key, data[key])
-      else
-        thisLevelData[key] = data[key]
-    $el = $templ(template + "-template", thisLevelData)
-
-    for classname of $childTemplates
-      $el.find("." + classname).append $childTemplates[classname]
-
-    for classname of $childTemplateLists
-      $el.find("." + classname).append $childTemplateLists[classname]
-
-    $el
-
-  killAllChildren = ($el) ->
-    $(child).remove() for child in $el.children()
-
-  templ = (name, data) ->
-    _.template(_.unescape($(name).html())) data
-
-  $templ = (name, data) ->
-    $("<span/>").html templ(name, data)
-
   class Game
     constructor: () ->
       console.log("bleh")
@@ -187,6 +82,9 @@ $ ->
   class Buildings extends Entity
     constructor: () -> super()
 
+    build: (type) ->
+      console.log type
+
   class Building extends Entity
     constructor: (@x, @y, @name) -> super()
 
@@ -226,8 +124,8 @@ $ ->
       @normalize()
 
     getBoundary: (name) ->
-      for i in [0...upperRangeBoundaries.length] when upperRangeBoundaries[i].name == name
-        return upperRangeBoundaries[i].value
+      for i in [0...G.upperRangeBoundaries.length] when G.upperRangeBoundaries[i].name == name
+        return G.upperRangeBoundaries[i].value
 
     intensityToColor: (intensity) ->
       red = undefined
@@ -303,7 +201,13 @@ $ ->
     requestAnimationFrame renderLoop
 
   # globals
-  G = {}
+  window.G = G = {}
+  G.upperRangeBoundaries = [
+    { name: "water", value: 0.3 },
+    { name: "land", value: 0.7 },
+    { name: "mountain", value: 0.9 },
+    { name: "snow", value: 1.0 }
+  ]
   G.mouse     = new Mouse($canvas)
   G.grid      = new Grid(TILES, TILES)
   G.stage     = new Stage().add(G.grid)

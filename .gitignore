@@ -1,3 +1,4 @@
 .DS_Store
 *.map
 src/main.js
+src/infobar.js
