@@ -47,13 +47,39 @@ $ ->
     constructor: (@x, @y) ->
       @children = []
 
+      # width calculated from graphical components on just this entity
+      @_basewidth = @_baseheight = 0
+
+      # width/height of this entity from everything incl nested children
+      @_width = @_height = 0
+
     add: (child) -> @children.push(child); @
 
     addTo: (entity) -> entity.children.push(@); @
 
     render: (context) ->
 
+    drawRect: (x, y, w, h, color) ->
+      context.fillStyle = color
+      context.fillRect x, y, w, h
+
+      @_basewidth  = Math.max(@_basewidth, x + w)
+      @_baseheight = Math.max(@_baseheight, y + h)
+
+    strokeRect: (x, y, w, h, color) ->
+      context.fillStyle = color
+      context.strokeRect x, y, w, h
+
+      @_basewidth  = Math.max(@_basewidth, x + w)
+      @_baseheight = Math.max(@_baseheight, y + h)
+
     snap: (value) -> Math.floor(value / TILESIZE) * TILESIZE
+
+    width: ()  ->
+      @_width
+
+    height: () ->
+      @_height
 
     moveTo: (x, y) ->
       @x = x
@@ -65,7 +91,20 @@ $ ->
       @y = @snap(@y)
       @
 
+    _preupdate: () ->
+      @_width = Math.max @_width, @_basewidth
+      @_height = Math.max @_height, @_baseheight
+
+      child._preupdate() for child in @children
+
+      @_width  = Math.max(@_width, Math.max _.pluck(@children, "_width")...)
+      @_height = Math.max(@_height, Math.max _.pluck(@children, "_height")...)
+
     _render: (context) ->
+      # we are about to recalculate the width in @render, so 0 them out.
+      @_width = 0
+      @_height = 0
+
       @render(context)
 
       context.translate(@x, @y)
@@ -76,8 +115,7 @@ $ ->
     constructor: () -> super(0, 0)
 
     render: (context) ->
-      context.fillStyle = G.rgb(0, 0, 0)
-      context.strokeRect @x, @y, TILESIZE, TILESIZE
+      @strokeRect @x, @y, TILESIZE, TILESIZE, G.rgb(0, 0, 0)
 
   class Buildings extends Entity
     constructor: () -> super()
@@ -98,12 +136,14 @@ $ ->
       super(@x, @y, "Power Plant")
 
     render: (context) ->
-      context.fillStyle = G.rgb(255, 255, 0)
-      context.fillRect @x, @y, TILESIZE, TILESIZE
+      @drawRect @x, @y, TILESIZE, TILESIZE, G.rgb(255, 255, 0)
+
+    click: () ->
+      console.log("click!")
 
   class Stage extends Entity
     constructor: () ->
-      super()
+      super(0, 0)
 
     addSelectionIcons: () ->
       @followSelection = new Selection().addTo(@)
@@ -197,10 +237,10 @@ $ ->
     render: (context) ->
       for i in [0...@grid.length]
         for j in [0...@grid[i].length]
-          context.fillStyle = @intensityToColor(@valueAt(i, j))
-          context.fillRect i * TILESIZE, j * TILESIZE, TILESIZE, TILESIZE
+          @drawRect i * TILESIZE, j * TILESIZE, TILESIZE, TILESIZE, @intensityToColor(@valueAt(i, j))
 
   renderLoop = ->
+    G.stage._preupdate()
     G.stage._render(context)
 
     requestAnimationFrame renderLoop
