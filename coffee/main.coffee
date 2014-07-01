@@ -1,3 +1,6 @@
+# bubble-down event system
+
+
 Function::getter = (prop, get) -> Object.defineProperty @prototype, prop, {get, configurable: yes}
 Function::setter = (prop, set) -> Object.defineProperty @prototype, prop, {set, configurable: yes}
 
@@ -31,7 +34,7 @@ $ ->
 
   class Infobar
     constructor: (@grid) ->
-      G.mouse.onclick (mi) => @click(mi)
+      G.mouse.click (mi) => @click(mi)
 
       @data =
         selectionName: "something"
@@ -123,24 +126,27 @@ $ ->
 
   class Mouse
     constructor: ($canvas) ->
-      $canvas.on "mousemove", (e) => @mousemove(e)
-      $canvas.on "mousedown", (e) => @mousedown(e)
+      $canvas.on "mousemove", (e) => @_mousemove(e)
+      $canvas.on "mousedown", (e) => @_mousedown(e)
 
       @x = @y = 0
-      @callbacks = []
+      @callbacks = {'click': [], 'mousemove': []}
 
-    onclick: (cb) ->
-      @callbacks.push(cb)
+    click: (cb) -> @callbacks['click'].push(cb)
 
-    mousemove: (e) ->
+    mousemove: (cb) -> @callbacks['mousemove'].push(cb)
+
+    mi: () -> new MouseInfo(@x, @y, @snapToIndex(@x), @snapToIndex(@y))
+
+    _mousemove: (e) ->
       @x = e.pageX - $canvas.offset().left
       @y = e.pageY - $canvas.offset().top
 
+      callback(@mi()) for callback in @callbacks['mousemove']
+
     snapToIndex: (value) -> Math.floor value / TILESIZE
 
-    mousedown: (e) ->
-      mi = new MouseInfo(@x, @y, @snapToIndex(@x), @snapToIndex(@y))
-      callback(mi) for callback in @callbacks
+    _mousedown: (e) -> callback(@mi()) for callback in @callbacks['click']
 
   class Entity
     constructor: (@x, @y) ->
@@ -150,7 +156,19 @@ $ ->
 
     addTo: (entity) -> entity.children.push(@); @
 
-    render: (context) -> console.log("reimplement!")
+    render: (context) ->
+
+    snap: (value) -> Math.floor(value / TILESIZE) * TILESIZE
+
+    moveTo: (x, y) ->
+      @x = x
+      @y = y
+      @
+
+    snapToGrid: () ->
+      @x = @snap(@x)
+      @y = @snap(@y)
+      @
 
     _render: (context) ->
       @render(context)
@@ -162,21 +180,47 @@ $ ->
   class Selection extends Entity
     constructor: () -> super(0, 0)
 
-    snapToGrid: (value) -> Math.floor(value / TILESIZE) * TILESIZE
-
     render: (context) ->
-      @x = @snapToGrid(G.mouse.x)
-      @y = @snapToGrid(G.mouse.y)
-
       context.fillStyle = G.rgb(0, 0, 0)
       context.strokeRect @x, @y, TILESIZE, TILESIZE
+
+  class Buildings extends Entity
+    constructor: () -> super()
+
+  class Building extends Entity
+    constructor: (@x, @y, @name) -> super()
+
+  class PowerPlant extends Building
+    constructor: (@x, @y) ->
+      super(@x, @y, "Power Plant")
+
+    render: (context) ->
+      context.fillStyle = G.rgb(255, 255, 0)
+      context.strokeRect @x, @y, TILESIZE, TILESIZE
+
+  class Stage extends Entity
+    constructor: () ->
+      super()
+
+    addSelectionIcons: () ->
+      @followSelection = new Selection().addTo(@)
+      @staticSelection = new Selection().addTo(@)
+
+      G.mouse.click (mi) => @moveStaticSelection(mi)
+      G.mouse.mousemove (mi) => @moveFollowSelection(mi)
+
+    moveStaticSelection: (mi) ->
+      @staticSelection.moveTo(mi.x, mi.y).snapToGrid()
+
+    moveFollowSelection: (mi) ->
+      @followSelection.moveTo(mi.x, mi.y).snapToGrid()
+
 
   class Grid extends Entity
     constructor: (w, h) ->
       super(0, 0)
 
       @grid = (0 for i in [0...w] for j in [0...h])
-      @selection = new Selection().addTo(@)
 
       @terrainize()
       @normalize()
@@ -261,11 +305,14 @@ $ ->
   # globals
   G = {}
   G.mouse     = new Mouse($canvas)
-  G.stage     = new Entity()
-  G.grid      = new Grid(TILES, TILES).addTo(G.stage)
+  G.grid      = new Grid(TILES, TILES)
+  G.stage     = new Stage().add(G.grid)
+  G.buildings = new Buildings().addTo(G.stage)
   G.infobar   = new Infobar(G.grid)
   G.rgb       = (r, g, b) -> "rgb(#{Math.floor(r)}, #{Math.floor(g)}, #{Math.floor(b)})"
   G.selection = undefined
+
+  G.stage.addSelectionIcons()
 
   main = ->
     # It annoys me that these are in reverse order.
