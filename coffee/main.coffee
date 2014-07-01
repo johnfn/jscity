@@ -83,10 +83,15 @@ $ ->
     constructor: () -> super()
 
     build: (type) ->
-      console.log type
+      loc = G.stage.staticSelection
+
+      building = switch type
+        when "Power Plant" then new PowerPlant(loc.x, loc.y)
+
+      this.add(building)
 
   class Building extends Entity
-    constructor: (@x, @y, @name) -> super()
+    constructor: (@x, @y, @name) -> super(@x, @y)
 
   class PowerPlant extends Building
     constructor: (@x, @y) ->
@@ -94,7 +99,7 @@ $ ->
 
     render: (context) ->
       context.fillStyle = G.rgb(255, 255, 0)
-      context.strokeRect @x, @y, TILESIZE, TILESIZE
+      context.fillRect @x, @y, TILESIZE, TILESIZE
 
   class Stage extends Entity
     constructor: () ->

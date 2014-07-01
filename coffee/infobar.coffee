@@ -44,6 +44,10 @@ templ = (name, data) ->
 $templ = (name, data) ->
   $("<span/>").html templ(name, data)
 
+
+
+
+
 class Infobar
   constructor: (@grid) ->
     G.mouse.click (mi) => @click(mi)
